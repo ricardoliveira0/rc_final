@@ -391,15 +391,25 @@ int main(int argc, char const *argv[]) // main
             {
               if (isUserOper(user[i]))
               {
-                setClientOper(buffer);
-                
-                send(i, "RPLY 701 – Utilizador foi registado com sucesso.", BUFSIZE, 0);
-                for (int k = 4; k < maxfd + 1; k++)
+                if (setClientOper(buffer))
                 {
-                  strcpy(cb,"server :> ");
-                  strcat(cb, nickReg);
-                  strcat(cb, " foi registado.");
-                  send(k, cb, BUFSIZE, 0);
+                  send(i, "RPLY 801 – Foi promovido a operador.", BUFSIZE, 0);
+                  for (int k = 4; k < maxfd + 1; k++)
+                  {
+                    buffer[strlen(buffer)-1] = 0;
+                    strcpy(cb,"server :> ");
+                    strcat(cb, buffer);
+                    strcat(cb, " foi promovido a operador.");
+                    send(k, cb, BUFSIZE, 0);
+                  }
+                } 
+                else
+                {
+                  buffer[strlen(buffer)-1] = 0;
+                  strcpy(cb, "RPLY 804 – Erro. Ação não autorizada, utilizador ");
+                  strcat(cb, buffer);
+                  strcat(cb, " não é um utilizador registado");
+                  send(i, cb, BUFSIZE, 0);
                 }
               }
               else
@@ -409,7 +419,32 @@ int main(int argc, char const *argv[]) // main
             }
             else
             {
-              end(i, "RPLY 803 – Erro. Ação não autorizada, utilizador cliente não está autenticado.", BUFSIZE, 0);
+              send(i, "RPLY 803 – Erro. Ação não autorizada, utilizador cliente não está autenticado.", BUFSIZE, 0);
+            }
+          }
+          else if (!strncmp(buffer, "QUIT", 4)) // command KICK [no args]
+          {
+            char cb[BUFSIZE];
+            if (isUserAuth(user[i] -> nick, user[i] -> pw)) // verifies if user is auth
+            {
+              if (isUserOper(user[i]))
+              {
+                if (removeClientOper(user[i] -> nick))
+                {
+                  send(i, "RPLY 901 – Deixou de ser operador", BUFSIZE, 0);
+                  for (int k = 4; k < maxfd + 1; k++)
+                  {
+                    strcpy(cb,"server :> ");
+                    strcat(cb, user[i] -> nick);
+                    strcat(cb, " deixou de ser operador.");
+                    send(k, cb, BUFSIZE, 0);
+                  }
+                } 
+              }
+              else
+              {
+                send(i, "RPLY 902 – Erro. Ação não autorizada, utilizador cliente não é um operador.", BUFSIZE, 0);
+              }
             }
           }
         }

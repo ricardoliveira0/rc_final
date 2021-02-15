@@ -107,8 +107,6 @@ bool isUserAuth(char nick[USER_MAX_VAR_SIZE], char buffer[USER_MAX_VAR_SIZE]) //
 	return false; // when reached the EOF, false is returned. not matched user
 }
 
-// WIP
-
 bool isUserOper(User * user)
 {
     char allLine[2*USER_MAX_VAR_SIZE+3], nickReg[strlen(user -> nick)];
@@ -119,33 +117,33 @@ bool isUserOper(User * user)
 		return false;
     }
 
-    while(fgets(allLine, 2*USER_MAX_VAR_SIZE+3, fp) != NULL) // get a full line from the file until it ends
+    while(fgets(allLine, 2*USER_MAX_VAR_SIZE+3, fp) != NULL)
     {
-        for (int i = 0, j = 0,count = 0; i < strlen(allLine); i++) // go through every single char
+        for (int i = 0,count = 0; i < strlen(allLine); i++)
         {
             if (count == 0) 
             {
-                if (strncmp(&allLine[i], ":", 1) || strlen(user -> nick) > i) // if it don't hit ':', it is still in the nickname (because format is 'nick:pw:oper')
-                {                                                    // otherwhise as we get a length smaller than i, we ignore this line
+                if (strncmp(&allLine[i], ":", 1) || strlen(user -> nick) > i)
+                {
                     strncpy(&nickReg[i], &allLine[i], 1);
                 } 
-                else if (!strncmp(&allLine[i], ":", 1) && !strncmp(user -> nick, nickReg, strlen(user -> nick))) // if it hits a ':', it has just reached the end of the nick
-                {                                                                               // as it is just finished and length is not different (as already checked above)
-                    count++;                                                                   // compares both nicks (the given one and the other that's written on the file). continue
+                else if (!strncmp(&allLine[i], ":", 1) && !strncmp(user -> nick, nickReg, strlen(user -> nick)))
+                {
+                    count++;
                 }
-                if (!strncmp(&allLine[i], ":", 1) && strncmp(user -> nick, nickReg, strlen(user -> nick))) // if it hits a ':', it has just reached the end of the nick
-                {                                                                                         // as it is just finished and length is not different (as already checked above)
-                    break;                                                                               // but both nicks are different, break the cycle
+                if (!strncmp(&allLine[i], ":", 1) && strncmp(user -> nick, nickReg, strlen(user -> nick)))
+                {
+                    break;
                 }
             } 
             else if (count == 1)
             {
-                if (strncmp(&allLine[i], ":", 1)) // if it don't hit ':', it is still in the password (because format is 'nick:pw:oper' and we already checked nick)
+                if (strncmp(&allLine[i], ":", 1))
                 {
                     continue;
                 } 
-                else if (!strncmp(&allLine[i], ":", 1)) // as it reaches the end of the pw, and when compared to the written one it matches
-                {                                                                                // the user is now auth
+                else if (!strncmp(&allLine[i], ":", 1))
+                {
                     count++;
                 }
             }
@@ -164,11 +162,10 @@ bool isUserOper(User * user)
                 } 
             }
         }
-        // clear char array after every line
         bzero(nickReg, USER_MAX_VAR_SIZE);
     }
     fclose(fp);
-	return false; // when reached the EOF, false is returned. not matched user
+	return false; 
 }
 
 void clientRemove(char nick[USER_MAX_VAR_SIZE])
@@ -183,21 +180,21 @@ void clientRemove(char nick[USER_MAX_VAR_SIZE])
 		return;
     }
 
-    while(fgets(allLine, 2*USER_MAX_VAR_SIZE+3, fp) != NULL) // get a full line from the file until it ends
+    while(fgets(allLine, 2*USER_MAX_VAR_SIZE+3, fp) != NULL)
     {
-        for (int i = 0; i < strlen(allLine); i++) // go through every single char
+        for (int i = 0; i < strlen(allLine); i++)
         {
-            if (strncmp(&allLine[i], ":", 1) || strlen(nick) > i) // if it don't hit ':', it is still in the nickname (because format is 'nick:pw:oper')
-            {                                                    // otherwhise as we get a length smaller than i, we ignore this line
+            if (strncmp(&allLine[i], ":", 1) || strlen(nick) > i)
+            {
                 strncpy(&nickReg[i], &allLine[i], 1);
             } 
-            else if (!strncmp(&allLine[i], ":", 1) && strncmp(nick, nickReg, strlen(nick))) // if it hits a ':', it has just reached the end of the nick
-            {                                                                               // as it is just finished and length is not different (as already checked above)
-                fprintf(fauxp, "%s", allLine);                                              // compares both nicks (the given one and the other that's written on the file). continue
+            else if (!strncmp(&allLine[i], ":", 1) && strncmp(nick, nickReg, strlen(nick)))
+            {
+                fprintf(fauxp, "%s", allLine);
             }
-            if (!strncmp(&allLine[i], ":", 1) && !strncmp(nick, nickReg, strlen(nick))) // if it hits a ':', it has just reached the end of the nick
-            {                                                                                         // as it is just finished and length is not different (as already checked above)
-                break;                                                                               // but both nicks are different, break the cycle
+            if (!strncmp(&allLine[i], ":", 1) && !strncmp(nick, nickReg, strlen(nick)))
+            {
+                break;
             }
         }
         // clear both char arrays after every line
@@ -244,6 +241,150 @@ void clientReg(char message[2*USER_MAX_VAR_SIZE+1])
         }
     }
 }
+
+bool setClientOper(char nick[USER_MAX_VAR_SIZE])
+{
+    char allLine[2*USER_MAX_VAR_SIZE+3], nickReg[strlen(nick)];
+    bool flag = false;
+    FILE * fp = fopen("regs.txt", "r"); // opens 'regs.txt' file, !read mode
+    FILE * fauxp = fopen("temp.txt", "a");
+
+    bzero(nickReg, USER_MAX_VAR_SIZE);
+
+    if(fp == NULL || fauxp == NULL)
+    {
+		return false;
+    }
+
+    while(fgets(allLine, 2*USER_MAX_VAR_SIZE+3, fp) != NULL) 
+    {
+        for (int i = 0,count = 0; i < strlen(allLine); i++) // go through every single char
+        {
+            if (count == 0) 
+            {
+                if (strncmp(&allLine[i], ":", 1)) 
+                {                                                  
+                    strncpy(&nickReg[i], &allLine[i], 1);
+                } 
+                else if (!strncmp(&allLine[i], ":", 1) && !strncmp(nick, nickReg, strlen(nickReg))) 
+                {                                                                               
+                    count++;                                                                   
+                }
+                if (!strncmp(&allLine[i], ":", 1) && strncmp(nick, nickReg, strlen(nickReg))) 
+                {                                                                                        
+                    fprintf(fauxp, "%s", allLine);                                                      
+                    break;                                                                               
+                }
+            } 
+            else if (count == 1)
+            {
+                if (strncmp(&allLine[i], ":", 1)) 
+                {
+                    continue;
+                } 
+                else if (!strncmp(&allLine[i], ":", 1)) 
+                {                                                                                
+                    count++;
+                }
+            }
+            else if (count == 2)
+            {
+                if (!strncmp(&allLine[i], "0", 1))
+                {
+                    strncpy(&allLine[i], "1", 1);
+                    fprintf(fauxp, "%s", allLine);
+                    flag = true;
+                    break;
+                } 
+                else
+                {
+                    break;  
+                } 
+            }
+        }
+        // clear both char arrays after every line
+        bzero(nickReg, USER_MAX_VAR_SIZE);
+        bzero(allLine, USER_MAX_VAR_SIZE);
+    }
+    fclose(fp);
+    fclose(fauxp);
+    remove("regs.txt");
+    rename("temp.txt", "regs.txt");
+    return flag;
+}
+
+bool removeClientOper(char nick[USER_MAX_VAR_SIZE])
+{
+    char allLine[2*USER_MAX_VAR_SIZE+3], nickReg[strlen(nick)];
+    bool flag = false;
+    FILE * fp = fopen("regs.txt", "r"); // opens 'regs.txt' file, !read mode
+    FILE * fauxp = fopen("temp.txt", "a");
+
+    bzero(nickReg, USER_MAX_VAR_SIZE);
+
+    if(fp == NULL || fauxp == NULL)
+    {
+		return false;
+    }
+
+    while(fgets(allLine, 2*USER_MAX_VAR_SIZE+3, fp) != NULL) 
+    {
+        for (int i = 0,count = 0; i < strlen(allLine); i++) // go through every single char
+        {
+            if (count == 0) 
+            {
+                if (strncmp(&allLine[i], ":", 1)) 
+                {                                                  
+                    strncpy(&nickReg[i], &allLine[i], 1);
+                } 
+                else if (!strncmp(&allLine[i], ":", 1) && !strncmp(nick, nickReg, strlen(nickReg))) 
+                {                                                                               
+                    count++;                                                                   
+                }
+                if (!strncmp(&allLine[i], ":", 1) && strncmp(nick, nickReg, strlen(nickReg))) 
+                {                                                                                        
+                    fprintf(fauxp, "%s", allLine);                                                      
+                    break;                                                                               
+                }
+            } 
+            else if (count == 1)
+            {
+                if (strncmp(&allLine[i], ":", 1)) 
+                {
+                    continue;
+                } 
+                else if (!strncmp(&allLine[i], ":", 1)) 
+                {                                                                                
+                    count++;
+                }
+            }
+            else if (count == 2)
+            {
+                if (!strncmp(&allLine[i], "1", 1))
+                {
+                    strncpy(&allLine[i], "0", 1);
+                    fprintf(fauxp, "%s", allLine);
+                    flag = true;
+                    break;
+                } 
+                else
+                {
+                    break;  
+                } 
+            }
+        }
+        // clear both char arrays after every line
+        bzero(nickReg, USER_MAX_VAR_SIZE);
+        bzero(allLine, USER_MAX_VAR_SIZE);
+    }
+    fclose(fp);
+    fclose(fauxp);
+    remove("regs.txt");
+    rename("temp.txt", "regs.txt");
+    return flag;
+}
+
+// WIP
 
 /* void regs_user(char nick[USER_MAX_VAR_SIZE], char pw[USER_MAX_VAR_SIZE])
 {
