@@ -157,6 +157,7 @@ bool isUserOper(User * user)
                 } 
                 else
                 {
+                    user -> oper = false;
                     fclose(fp);
                     return false;    
                 } 

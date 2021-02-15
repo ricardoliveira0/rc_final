@@ -135,19 +135,32 @@ int main(int argc, char const *argv[]) // main
             }
             else
             {
-              char oldNick[10];
+              char oldNick[10], cb[BUFSIZE];
               strcpy(oldNick, user[i] -> nick);
               buffer[bytes] = 0;
               strcpy(user[i] -> nick, buffer);
 
               if (!strcmp(oldNick, "ANON")) // if nick is still default then is a new user
-              {
-                printf("Novo utilizador criado: %s\n", user[i] -> nick);              
+              {    
+                for (int k = 4; k < maxfd + 1; k++)
+                {
+                  strcpy(cb, "server :> novo utilizador ");
+                  strcat(cb, user[i] -> nick);
+                  send(k, cb, BUFSIZE, 0);
+                }
+                       
               } 
               else // otherwise user has already a nick, changing
               {
                 oldNick[strlen(oldNick)] = 0;
-                printf("%s mudou o seu nickname para %s\n", oldNick, user[i] -> nick);
+                for (int k = 4; k < maxfd + 1; k++)
+                {
+                  strcpy(cb, "server :> ");
+                  strcat(cb, oldNick);
+                  strcat(cb, " mudou o seu nome para ");
+                  strcat(cb, user[i] -> nick);
+                  send(k, cb, BUFSIZE, 0);
+                }
               }
               buffer[strlen(buffer)] = 0;
 
@@ -311,7 +324,7 @@ int main(int argc, char const *argv[]) // main
                   strcpy(cb, "nick: ");
                   strcat(cb, user[k] -> nick);
                   strcat(cb, " || oper: ");
-                  if (user[k] -> oper) 
+                  if (isUserOper(user[k])) 
                   {
                     strcat(cb, "true");
                   }
@@ -394,9 +407,9 @@ int main(int argc, char const *argv[]) // main
                 if (setClientOper(buffer))
                 {
                   send(i, "RPLY 801 – Foi promovido a operador.", BUFSIZE, 0);
+                  buffer[strlen(buffer)-1] = 0;
                   for (int k = 4; k < maxfd + 1; k++)
                   {
-                    buffer[strlen(buffer)-1] = 0;
                     strcpy(cb,"server :> ");
                     strcat(cb, buffer);
                     strcat(cb, " foi promovido a operador.");

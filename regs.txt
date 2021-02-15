@@ -1,5 +1,4 @@
 admin:admin:1
-ricardo:123:0
-filipe:pass:0
-miguel:pw:0
-filalfa:pw123:0
+ricardo:pass:0
+filipe:123:0
+
