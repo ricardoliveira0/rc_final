@@ -1,0 +1,8 @@
+admin:admin:1
+filipe:123:1
+miguel:redes:1
+ricardo:asd:0
+A:1:0
+B:2:0
+C:3:0
+D:4:0
