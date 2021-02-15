@@ -24,39 +24,38 @@ User * new_user()
     return user;
 }
 
-bool isClientOnline(char buffer[USER_MAX_VAR_SIZE])
+bool isClientOnline(char buffer[USER_MAX_VAR_SIZE]) // function that verifies if the NICK requested is already in use
 {
-    buffer[strlen(buffer) - 1] = 0;
+    buffer[strlen(buffer) - 1] = 0; // removes '\0'
     char currentNick[USER_MAX_VAR_SIZE];
-    FILE * fp = fopen("online.txt", "r");
+    FILE * fp = fopen("online.txt", "r"); // opens 'online.txt' file, !read mode
 
     if (fp == NULL) 
     {
         return false;
     }
 
-    while (fgets(currentNick, USER_MAX_VAR_SIZE, fp) != NULL) 
+    while (fgets(currentNick, USER_MAX_VAR_SIZE, fp) != NULL) // get a full line from the file until it ends
     {
-        currentNick[strlen(currentNick) - 1] = 0;
-        /* printf("%s é igual a %s? %d\n",buffer, currentNick, strcmp(currentNick, buffer)); */
-        if (!strcmp(currentNick, buffer))
+        currentNick[strlen(currentNick) - 1] = 0; // removes '\0'
+        if (!strcmp(currentNick, buffer)) // if the NICK requested is equal to a online one, returns true (a client with that NICK is online)
         {
             fclose(fp);
             return true;
         }
         
     }
-    fclose(fp);
+    fclose(fp); // otherwhise that NICK is free
     return false;
 }
 
 
-bool isUserAuth(char nick[USER_MAX_VAR_SIZE], char buffer[USER_MAX_VAR_SIZE])
+bool isUserAuth(char nick[USER_MAX_VAR_SIZE], char buffer[USER_MAX_VAR_SIZE]) // function that verifies if a specific user is registered
 {
     char allLine[2*USER_MAX_VAR_SIZE+3], nickReg[strlen(nick)], pwReg[strlen(buffer)];
     int op;
 
-	FILE * fp = fopen("regs.txt", "r");
+	FILE * fp = fopen("regs.txt", "r"); // opens 'regs.txt' file, !read mode
 
 	if(fp == NULL)
     {
@@ -64,45 +63,46 @@ bool isUserAuth(char nick[USER_MAX_VAR_SIZE], char buffer[USER_MAX_VAR_SIZE])
     }
 
 
-    while(fgets(allLine, 2*USER_MAX_VAR_SIZE+3, fp) != NULL)
+    while(fgets(allLine, 2*USER_MAX_VAR_SIZE+3, fp) != NULL) // get a full line from the file until it ends
     {
-        for (int i = 0, j = 0,count = 0; i < strlen(allLine); i++)
+        for (int i = 0, j = 0,count = 0; i < strlen(allLine); i++) // go through every single char
         {
             if (count == 0) 
             {
-                if (strncmp(&allLine[i], ":", 1) || strlen(nick) > i) // !=
-                {
+                if (strncmp(&allLine[i], ":", 1) || strlen(nick) > i) // if it don't hit ':', it is still in the nickname (because format is 'nick:pw:oper')
+                {                                                    // otherwhise as we get a length smaller than i, we ignore this line
                     strncpy(&nickReg[i], &allLine[i], 1);
                     printf("char do txt %c\n", allLine[i]);
                     printf("NICK %s\n", nickReg);
                 } 
-                else if (!strncmp(&allLine[i], ":", 1) && !strncmp(nick, nickReg, strlen(nick))) // ==
-                {
-                    count++;
+                else if (!strncmp(&allLine[i], ":", 1) && !strncmp(nick, nickReg, strlen(nick))) // if it hits a ':', it has just reached the end of the nick
+                {                                                                               // as it is just finished and length is not different (as already checked above)
+                    count++;                                                                   // compares both nicks (the given one and the other that's written on the file). continue
                 }
-                if (!strncmp(&allLine[i], ":", 1) && strncmp(nick, nickReg, strlen(nick)))
-                {
-                    break;
+                if (!strncmp(&allLine[i], ":", 1) && strncmp(nick, nickReg, strlen(nick))) // if it hits a ':', it has just reached the end of the nick
+                {                                                                         // as it is just finished and length is not different (as already checked above)
+                    break;                                                               // but both nicks are different, break the cycle
                 }
             } 
             else if (count == 1)
             {
-                if (strncmp(&allLine[i], ":", 1))
+                if (strncmp(&allLine[i], ":", 1)) // if it don't hit ':', it is still in the password (because format is 'nick:pw:oper' and we already checked nick)
                 {
                     strncpy(&pwReg[j], &allLine[i], 1);
                     j++;
                     printf("PW %s\n", pwReg);
                 } 
-                else if (!strncmp(&allLine[i], ":", 1) && !strncmp(buffer, pwReg, strlen(pwReg)))
-                {
+                else if (!strncmp(&allLine[i], ":", 1) && !strncmp(buffer, pwReg, strlen(pwReg))) // as it reaches the end of the pw, and when compared to the written one it matches
+                {                                                                                // the user is now auth
                     return true;
                 }
             }
         }
+        // clear both char arrays after every line
         bzero(nickReg, USER_MAX_VAR_SIZE);
         bzero(pwReg, USER_MAX_VAR_SIZE);
     }
-	return false;
+	return false; // when reached the EOF, false is returned. not matched user
 }
 
 // WIP

@@ -32,10 +32,10 @@ int main()
 
     FD_ZERO(&master);
     FD_SET(sock, &master);
-    FD_SET(0, &master); //o 0 é o teclado
+    FD_SET(0, &master); // 0 for keyboard
     maxfd = sock;
 
-    while(true)
+    while(true) // client loop
     {
         read_fds = master;
         select(maxfd + 1, &read_fds, NULL, NULL, NULL);
@@ -46,9 +46,8 @@ int main()
         } else {
             numbytes = recv(sock, input_x_client, MAXDATASIZE, 0);
             input_x_client[numbytes-1] = 0;
-            //printf("Os dados recebidos são: %s \n", input_x_client);
             puts(input_x_client);
-            // close(socket);
+            // close(socket); can't close socket here
         }
         
     }
